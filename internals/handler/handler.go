@@ -16,12 +16,12 @@ type VideoHandler interface {
 }
 
 type handler struct {
-	repo repository.VideoService
+	repo repository.DatabaseRepo
 }
 
 var validate *validator.Validate
 
-func NewRepo(r repository.VideoService) VideoHandler {
+func NewRepo(r repository.DatabaseRepo) VideoHandler {
 	validate = validator.New()
 	return &handler{
 		repo: r,
@@ -43,7 +43,7 @@ func (h *handler) FindAll(ctx *gin.Context) {
 }
 
 func (h *handler) Save(ctx *gin.Context) {
-	var video models.Video
+	var video *models.Video
 	if err := ctx.BindJSON(&video); err != nil {
 		ctx.JSON(http.StatusInternalServerError, helper.Error{
 			Message: err.Error(),

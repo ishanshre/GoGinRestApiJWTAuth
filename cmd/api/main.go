@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ishanshre/GoRestApiExample/internals/driver"
 	"github.com/ishanshre/GoRestApiExample/internals/handler"
 	"github.com/ishanshre/GoRestApiExample/internals/repository/dbrepo"
 	"github.com/ishanshre/GoRestApiExample/internals/router"
@@ -31,8 +32,12 @@ func run() handler.VideoHandler {
 	// setup log file
 	setupLoggerOutput()
 
+	db, err := driver.NewDatabase("postgres", os.Getenv("postgres"))
+	if err != nil {
+		log.Printf("Error in connecting to database: %s\n", err)
+	}
 	// connecting to database repository
-	videoService := dbrepo.NewVideoService()
+	videoService := dbrepo.NewPostgresRepo(db)
 
 	// connecting the handler
 	handler := handler.NewRepo(videoService)

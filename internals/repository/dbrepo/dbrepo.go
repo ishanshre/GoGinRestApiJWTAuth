@@ -1,14 +1,17 @@
 package dbrepo
 
 import (
-	"github.com/ishanshre/GoRestApiExample/internals/models"
+	"database/sql"
+
 	"github.com/ishanshre/GoRestApiExample/internals/repository"
 )
 
-type videoService struct {
-	videos []models.Video
+type postgresDBRepo struct {
+	DB *sql.DB
 }
 
-func NewVideoService() repository.VideoService {
-	return &videoService{}
+func NewPostgresRepo(conn *sql.DB) repository.DatabaseRepo {
+	return &postgresDBRepo{
+		DB: conn,
+	}
 }
