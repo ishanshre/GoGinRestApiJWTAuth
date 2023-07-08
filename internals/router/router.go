@@ -11,7 +11,8 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	r := gin.New()
 
 	// using middleware
-	r.Use(gin.Recovery(), middleware.Logger(), middleware.Basic_Auth())
+	r.Use(gin.Recovery(), middleware.Logger())
+	// r.Use(middleware.Basic_Auth())
 	r.GET("/videos", handler.FindAll)
 	r.POST("/videos/create", handler.Save)
 	return r
