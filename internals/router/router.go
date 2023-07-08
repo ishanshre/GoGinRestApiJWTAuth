@@ -17,7 +17,7 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	// In gin most specific router must be above
 	r.DELETE("/videos/detail/:id/delete", handler.DeleteVideoByID)
 	r.GET("/videos/detail/:id", handler.GetVideoByID)
-	r.POST("/videos/create", handler.CreateVideo)
+	r.POST("/videos/create", middleware.JwtAccessAuthMiddleware(), handler.CreateVideo)
 	r.GET("/videos", handler.GetAllVideos)
 
 	// user router
