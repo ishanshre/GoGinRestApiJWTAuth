@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/ishanshre/GoRestApiExample/internals/handler"
 	"github.com/ishanshre/GoRestApiExample/internals/repository/dbrepo"
+	"github.com/ishanshre/GoRestApiExample/internals/router"
 	"github.com/joho/godotenv"
 )
 
@@ -13,9 +13,7 @@ const port = ":8000"
 
 func main() {
 	handler := run()
-	r := gin.Default()
-	r.GET("/videos", handler.FindAll)
-	r.POST("/videos/create", handler.Save)
+	r := router.SetupRouter(handler)
 	r.Run(port)
 }
 
