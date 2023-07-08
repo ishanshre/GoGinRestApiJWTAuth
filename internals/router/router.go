@@ -19,5 +19,9 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	r.GET("/videos/detail/:id", handler.GetVideoByID)
 	r.POST("/videos/create", handler.CreateVideo)
 	r.GET("/videos", handler.GetAllVideos)
+
+	// user router
+
+	r.POST("/users/sign-up", handler.RegisterUser)
 	return r
 }

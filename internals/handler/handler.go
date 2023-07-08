@@ -1,14 +1,18 @@
 package handler
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/ishanshre/GoRestApiExample/internals/helper"
 	"github.com/ishanshre/GoRestApiExample/internals/models"
 	"github.com/ishanshre/GoRestApiExample/internals/repository"
+	"github.com/ishanshre/GoRestApiExample/internals/validators"
 )
 
 type VideoHandler interface {
@@ -16,6 +20,7 @@ type VideoHandler interface {
 	CreateVideo(ctx *gin.Context)
 	GetVideoByID(ctx *gin.Context)
 	DeleteVideoByID(ctx *gin.Context)
+	RegisterUser(ctx *gin.Context)
 }
 
 type handler struct {
@@ -26,6 +31,9 @@ var validate *validator.Validate
 
 func NewRepo(r repository.DatabaseRepo) VideoHandler {
 	validate = validator.New()
+	validate.RegisterValidation("upper", validators.UpperCase)
+	validate.RegisterValidation("lower", validators.LowerCase)
+	validate.RegisterValidation("number", validators.Number)
 	return &handler{
 		repo: r,
 	}
@@ -138,5 +146,90 @@ func (h *handler) DeleteVideoByID(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, helper.Success{
 		Message: "Success in deleting the video",
+	})
+}
+
+func (h *handler) RegisterUser(ctx *gin.Context) {
+	var user *models.CreateUser
+	if err := ctx.BindJSON(&user); err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error in parsing json",
+			Data:    err,
+		})
+		return
+	}
+	log.Println(user.Email)
+	if err := validate.Struct(user); err != nil {
+		validationErrors, ok := err.(validator.ValidationErrors)
+		if !ok {
+			ctx.JSON(http.StatusBadRequest, helper.Error{
+				Message: "Input Validation Error",
+				Data:    err.Error(),
+			})
+			return
+		}
+
+		// Handle validation errors
+		for _, e := range validationErrors {
+			ctx.JSON(http.StatusBadRequest, helper.Error{
+				Message: fmt.Sprintf("Validation error for field '%s': %s\n", e.Field(), e.Tag()),
+			})
+			return
+		}
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Input Validation Error",
+			Data:    err.Error(),
+		})
+		return
+	}
+	exists, err := h.repo.UserExists(user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error in validating username",
+			Data:    err,
+		})
+		return
+	}
+	if exists {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Username already exists. Please take another username",
+		})
+		return
+	}
+	exists, err = h.repo.EmailExists(user.Email)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error in checking email exists",
+			Data:    err,
+		})
+		return
+	}
+	if exists {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Email already exists. Please take another username",
+		})
+		return
+	}
+	hashedPassword, err := helper.GeneratePassword(user.Password)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error hashing password",
+			Data:    err,
+		})
+		return
+	}
+	user.Password = hashedPassword
+	user.CreatedAt = time.Now()
+	result, err := h.repo.CreateUser(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error registering new user",
+			Data:    err,
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, helper.Success{
+		Message: "Success in registering new user",
+		Data:    result,
 	})
 }

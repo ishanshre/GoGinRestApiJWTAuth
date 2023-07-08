@@ -15,4 +15,10 @@ type DatabaseRepo interface {
 	GetAllAuthors() ([]*models.Author, error)
 	GetAuhtorByID(id int) (*models.Author, error)
 	DeleteAuthorByID(id int) error
+
+	//user interface
+	CreateUser(u *models.CreateUser) (*models.User, error)
+	GetUserByID(id int) (*models.User, error)
+	UserExists(username string) (bool, error)
+	EmailExists(email string) (bool, error)
 }
