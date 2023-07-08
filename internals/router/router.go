@@ -23,5 +23,6 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	// user router
 
 	r.POST("/users/sign-up", handler.RegisterUser)
+	r.POST("/users/login", handler.UserLogin)
 	return r
 }

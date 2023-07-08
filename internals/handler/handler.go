@@ -21,6 +21,7 @@ type VideoHandler interface {
 	GetVideoByID(ctx *gin.Context)
 	DeleteVideoByID(ctx *gin.Context)
 	RegisterUser(ctx *gin.Context)
+	UserLogin(ctx *gin.Context)
 }
 
 type handler struct {
@@ -231,5 +232,65 @@ func (h *handler) RegisterUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, helper.Success{
 		Message: "Success in registering new user",
 		Data:    result,
+	})
+}
+
+func (h *handler) UserLogin(ctx *gin.Context) {
+	user := &models.User{}
+
+	// get username and password from request body
+	if err := ctx.BindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error in parsing json",
+			Data:    err,
+		})
+		return
+	}
+
+	// check if username exists
+	exists, err := h.repo.UserExists(user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error in checking the username",
+			Data:    err,
+		})
+		return
+	}
+	if !exists {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Username does not exists",
+		})
+		return
+	}
+
+	// fetch the user
+	actual_user, err := h.repo.GetUserByUsername(user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error occured on fetching the user",
+			Data:    err,
+		})
+		return
+	}
+
+	// check the password
+	if err := helper.ComparePasswordHash(actual_user.Password, user.Password); err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Invalid Username/Password",
+			Data:    err,
+		})
+		return
+	}
+	token, err := helper.GenerateLoginResponse(actual_user.ID, actual_user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error generating tokens",
+			Data:    err,
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, helper.Success{
+		Message: "Login Success",
+		Data:    token,
 	})
 }

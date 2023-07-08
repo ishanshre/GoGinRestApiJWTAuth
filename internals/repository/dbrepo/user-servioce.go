@@ -92,3 +92,24 @@ func (s *postgresDBRepo) EmailExists(email string) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func (s *postgresDBRepo) GetUserByUsername(username string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	query := `SELECT * FROM users WHERE username=$1`
+	row := s.DB.QueryRowContext(ctx, query, username)
+	u := &models.User{}
+	if err := row.Scan(
+		&u.ID,
+		&u.FirstName,
+		&u.LastName,
+		&u.Username,
+		&u.Email,
+		&u.Password,
+		&u.CreatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return u, nil
+}

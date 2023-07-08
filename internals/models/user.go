@@ -23,3 +23,10 @@ type CreateUser struct {
 	Password  string    `json:"password" validate:"required,min=8,containsany=!@#$%^&*(),upper,lower,number"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type LoginResponse struct {
+	Username     string `json:"username"`
+	ID           int    `json:"id"`
+	AccessToken  string `json:"access_token"`
+	RefershToken string `json:"refersh_token"`
+}
