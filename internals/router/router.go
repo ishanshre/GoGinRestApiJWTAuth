@@ -18,11 +18,12 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	r.DELETE("/videos/detail/:id/delete", handler.DeleteVideoByID)
 	r.GET("/videos/detail/:id", handler.GetVideoByID)
 	r.POST("/videos/create", middleware.JwtAccessAuthMiddleware(), handler.CreateVideo)
-	r.GET("/videos", handler.GetAllVideos)
+	r.GET("/videos", middleware.JwtAccessAuthMiddleware(), handler.GetAllVideos)
 
 	// user router
 
 	r.POST("/users/sign-up", handler.RegisterUser)
 	r.POST("/users/login", handler.UserLogin)
+	r.POST("/users/refresh", middleware.JwtAccessAuthMiddleware(), handler.RefreshToken)
 	return r
 }

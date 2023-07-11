@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +15,7 @@ import (
 	"github.com/ishanshre/GoRestApiExample/internals/models"
 	"github.com/ishanshre/GoRestApiExample/internals/repository"
 	"github.com/ishanshre/GoRestApiExample/internals/validators"
+	"github.com/redis/go-redis/v9"
 )
 
 type VideoHandler interface {
@@ -22,21 +25,25 @@ type VideoHandler interface {
 	DeleteVideoByID(ctx *gin.Context)
 	RegisterUser(ctx *gin.Context)
 	UserLogin(ctx *gin.Context)
+	RefreshToken(ctx *gin.Context)
+	GenerateAndSetToken(ctx context.Context, actual_user *models.User) (*models.LoginResponse, *helper.Token, error)
 }
 
 type handler struct {
-	repo repository.DatabaseRepo
+	repo        repository.DatabaseRepo
+	redisClient *redis.Client
 }
 
 var validate *validator.Validate
 
-func NewRepo(r repository.DatabaseRepo) VideoHandler {
+func NewRepo(r repository.DatabaseRepo, redisClient *redis.Client) VideoHandler {
 	validate = validator.New()
 	validate.RegisterValidation("upper", validators.UpperCase)
 	validate.RegisterValidation("lower", validators.LowerCase)
 	validate.RegisterValidation("number", validators.Number)
 	return &handler{
-		repo: r,
+		repo:        r,
+		redisClient: redisClient,
 	}
 }
 
@@ -281,16 +288,72 @@ func (h *handler) UserLogin(ctx *gin.Context) {
 		})
 		return
 	}
-	token, err := helper.GenerateLoginResponse(actual_user.ID, actual_user.Username)
+	token, tokenDetail, err := h.GenerateAndSetToken(ctx, actual_user)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, helper.Error{
-			Message: "Error generating tokens",
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error in generating and setting token",
 			Data:    err,
 		})
 		return
 	}
+
+	log.Println(tokenDetail.AccessToken.ExpiresAt)
 	ctx.JSON(http.StatusOK, helper.Success{
 		Message: "Login Success",
 		Data:    token,
 	})
+}
+
+func (h *handler) RefreshToken(ctx *gin.Context) {
+	refreshToken := &models.RefreshToken{}
+	if err := ctx.BindJSON(&refreshToken); err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Cannot parse the json",
+			Data:    err.Error(),
+		})
+		return
+	}
+	claims, err := helper.VerifyTokenWithClaims(refreshToken.RefreshToken, "refresh_token")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error in validating token",
+			Data:    err.Error(),
+		})
+		return
+	}
+	if err := h.redisClient.Del(ctx, claims.TokenID).Err(); err != nil {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Error in deleting token",
+			Data:    err,
+		})
+		return
+	}
+	token, tokenDetail, err := h.GenerateAndSetToken(ctx, &models.User{ID: claims.UserID, Username: claims.Username})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, helper.Error{
+			Message: "Error in generating and setting token",
+			Data:    err,
+		})
+		return
+	}
+	log.Println(tokenDetail.AccessToken.TokenID)
+	ctx.JSON(http.StatusOK, helper.Success{
+		Message: "Success in refreshing the token",
+		Data:    token,
+	})
+}
+
+func (h *handler) GenerateAndSetToken(ctx context.Context, actual_user *models.User) (*models.LoginResponse, *helper.Token, error) {
+	token, tokenDetail, err := helper.GenerateLoginResponse(actual_user.ID, actual_user.Username)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokenDetailJSON, err := json.Marshal(tokenDetail)
+	if err != nil {
+		return nil, nil, err
+	}
+	if errAccess := h.redisClient.Set(ctx, tokenDetail.AccessToken.TokenID, tokenDetailJSON, time.Until(tokenDetail.AccessToken.ExpiresAt)).Err(); errAccess != nil {
+		return nil, nil, errAccess
+	}
+	return token, tokenDetail, nil
 }

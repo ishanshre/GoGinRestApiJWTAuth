@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ishanshre/GoRestApiExample/internals/models"
+	uuid "github.com/satori/go.uuid"
 )
 
 var (
@@ -22,24 +23,33 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateLoginResponse(id int, username string) (*models.LoginResponse, error) {
-	access_token, err := generateAccessToken(id, username)
-	if err != nil {
-		return nil, err
-	}
-	refresh_token, err := generateRefreshToken(id, username)
-	if err != nil {
-		return nil, err
-	}
-	return &models.LoginResponse{
-		Username:     username,
-		ID:           id,
-		AccessToken:  access_token,
-		RefershToken: refresh_token,
-	}, nil
+type Token struct {
+	AccessToken  *TokenDetail
+	RefreshToken *TokenDetail
 }
 
-func generateAccessToken(id int, username string) (string, error) {
+func GenerateLoginResponse(id int, username string) (*models.LoginResponse, *Token, error) {
+	tokenID := uuid.NewV4().String()
+	access_token_detail, err := generateAccessToken(id, username, tokenID)
+	if err != nil {
+		return nil, nil, err
+	}
+	refresh_token_detail, err := generateRefreshToken(id, username, tokenID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &models.LoginResponse{
+			Username:     username,
+			ID:           id,
+			AccessToken:  *access_token_detail.Token,
+			RefershToken: *refresh_token_detail.Token,
+		}, &Token{
+			AccessToken:  access_token_detail,
+			RefreshToken: refresh_token_detail,
+		}, nil
+}
+
+func generateAccessToken(id int, username, tokenID string) (*TokenDetail, error) {
 	// creating access claim
 	access_claims := &Claims{
 		Username: username,
@@ -49,6 +59,7 @@ func generateAccessToken(id int, username string) (string, error) {
 			IssuedAt:  IssuedAt,
 			NotBefore: NotBefore,
 			Subject:   "access_token",
+			ID:        tokenID,
 		},
 	}
 
@@ -58,13 +69,20 @@ func generateAccessToken(id int, username string) (string, error) {
 	// sign the token with our unique secret from the environment files
 	signedAccessToken, err := access_token.SignedString(secret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return signedAccessToken, nil
+	return &TokenDetail{
+		Token:     &signedAccessToken,
+		UserID:    id,
+		Username:  username,
+		ExpiresAt: access_claims.RegisteredClaims.ExpiresAt.Time,
+		Subject:   access_claims.RegisteredClaims.Subject,
+		TokenID:   access_claims.RegisteredClaims.ID,
+	}, nil
 
 }
 
-func generateRefreshToken(id int, username string) (string, error) {
+func generateRefreshToken(id int, username, tokenID string) (*TokenDetail, error) {
 	// creating custom refresh token claims
 	refresh_claims := &Claims{
 		Username: username,
@@ -74,6 +92,7 @@ func generateRefreshToken(id int, username string) (string, error) {
 			IssuedAt:  IssuedAt,
 			NotBefore: NotBefore,
 			Subject:   "refresh_token",
+			ID:        tokenID,
 		},
 	}
 
@@ -83,8 +102,15 @@ func generateRefreshToken(id int, username string) (string, error) {
 	// sign the token with the secret
 	signedRefreshToken, err := refresh_token.SignedString(secret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return signedRefreshToken, nil
+	return &TokenDetail{
+		Token:     &signedRefreshToken,
+		TokenID:   refresh_claims.RegisteredClaims.ID,
+		UserID:    id,
+		Username:  username,
+		ExpiresAt: refresh_claims.RegisteredClaims.ExpiresAt.Time,
+		Subject:   refresh_claims.RegisteredClaims.Subject,
+	}, nil
 
 }

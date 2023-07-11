@@ -8,7 +8,16 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func VerifyTokenWithClaims(tokenString, subject string) (*jwt.Token, error) {
+type TokenDetail struct {
+	Token     *string
+	TokenID   string
+	UserID    int
+	Username  string
+	ExpiresAt time.Time
+	Subject   string
+}
+
+func VerifyTokenWithClaims(tokenString, subject string) (*TokenDetail, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -31,5 +40,12 @@ func VerifyTokenWithClaims(tokenString, subject string) (*jwt.Token, error) {
 	if claims.Subject != subject {
 		return nil, errors.New("token invalid: subject mismatch")
 	}
-	return token, nil
+	return &TokenDetail{
+		Token:     &tokenString,
+		TokenID:   claims.RegisteredClaims.ID,
+		UserID:    claims.ID,
+		Username:  claims.Username,
+		ExpiresAt: claims.RegisteredClaims.ExpiresAt.Time,
+		Subject:   claims.Subject,
+	}, nil
 }

@@ -37,18 +37,23 @@ func JwtAccessAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		// verify and parse the JWT token
-		token, err := helper.VerifyTokenWithClaims(tokenString[1], "access_token")
+		tokenClaims, err := helper.VerifyTokenWithClaims(tokenString[1], "access_token")
 		if err != nil {
-			log.Println("I am heree")
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			ctx.Abort()
 			return
 		}
-		log.Println("After token verification")
-		ctx.Set("token", token)
-
+		if err := redisClient.Exists(ctx, tokenClaims.TokenID).Err(); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid token or token does not exists in cache",
+			})
+			ctx.Abort()
+			return
+		}
+		log.Println(redisClient.Get(ctx, tokenClaims.TokenID))
+		ctx.Set("tokenID", tokenClaims.TokenID)
 		ctx.Next()
 	}
 }

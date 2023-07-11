@@ -30,3 +30,7 @@ type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefershToken string `json:"refersh_token"`
 }
+
+type RefreshToken struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
