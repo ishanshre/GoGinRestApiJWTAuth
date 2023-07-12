@@ -54,6 +54,8 @@ func JwtAccessAuthMiddleware() gin.HandlerFunc {
 		}
 		log.Println(redisClient.Get(ctx, tokenClaims.TokenID))
 		ctx.Set("tokenID", tokenClaims.TokenID)
+		ctx.Set("userID", tokenClaims.UserID)
+		ctx.Set("username", tokenClaims.Username)
 		ctx.Next()
 	}
 }

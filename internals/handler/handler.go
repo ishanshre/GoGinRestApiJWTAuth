@@ -321,10 +321,25 @@ func (h *handler) RefreshToken(ctx *gin.Context) {
 		})
 		return
 	}
-	if err := h.redisClient.Del(ctx, claims.TokenID).Err(); err != nil {
+	exists, err := h.redisClient.Exists(ctx, claims.TokenID).Result()
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, helper.Error{
-			Message: "Error in deleting token",
-			Data:    err,
+			Message: "Error in checking token in redis",
+			Data:    err.Error(),
+		})
+		return
+	}
+	if exists == 1 {
+		if err := h.redisClient.Del(ctx, claims.TokenID).Err(); err != nil {
+			ctx.JSON(http.StatusBadRequest, helper.Error{
+				Message: "Error in deleting token",
+				Data:    err,
+			})
+			return
+		}
+	} else {
+		ctx.JSON(http.StatusBadRequest, helper.Error{
+			Message: "Token already revoked",
 		})
 		return
 	}

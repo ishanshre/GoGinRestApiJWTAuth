@@ -1,5 +1,12 @@
 # GoRestApiExample
-A simple CRUD json rest api using Go, Gin and Gorm
+A simple CRUD json rest api using Go, Gin.
+
+# Features
+    - Structured project folders
+    - Sperate handler interface and database interface
+    - JWT token authentication with access and refresh token with token revokation mechanism using redis
+    - Strong custom Password Validation
+    - Log to file
 
 
 ## .env file
