@@ -27,6 +27,9 @@ type VideoHandler interface {
 	UserLogin(ctx *gin.Context)
 	RefreshToken(ctx *gin.Context)
 	GenerateAndSetToken(ctx context.Context, actual_user *models.User) (*models.LoginResponse, *helper.Token, error)
+
+	AddAuthorHandlerHtmx(c *gin.Context)
+	HomeHandlerHtmx(c *gin.Context)
 }
 
 type handler struct {
