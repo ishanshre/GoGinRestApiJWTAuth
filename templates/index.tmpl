@@ -59,10 +59,26 @@
         <div class="card">
           <div class="card-body">
             <h3 class="card-title">Authors List</h3>
-            <ul>
-              {{ range}}
-              <li></li>
-            </ul>
+            {{ $authors := index .Data "authors" }}
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email Address</th>
+                </tr>
+              </thead>
+
+              <tbody>
+              {{range $authors }}
+                <tr>
+                  <td>{{.ID}}</td>
+                  <td>{{.FirstName}} {{ .LastName }}</td>
+                  <td>{{.Email}}</td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
           </div>
 
         </div>
@@ -72,7 +88,7 @@
         <div class="card">
           <div class="card-body">
             <h3 class="card-title">Create Author</h3>
-            <form>
+            <form action="/add-author" method="post">
               <div class="mb-3">
                 <label for="first_name" class="form-label">First Name</label>
                 <input type="text" class="form-control" id="first_name" placeholder="John" name="first_name">
@@ -83,7 +99,8 @@
               </div>
               <div class="mb-3">
                 <label for="email_address" class="form-label">Email address</label>
-                <input type="email" class="form-control" id="email_address" placeholder="name@example.com" name="email_address">
+                <input type="email" class="form-control" id="email_address" placeholder="name@example.com"
+                  name="email_address">
               </div>
               <button type="submit" class="btn btn-outline-primary">Submit</button>
             </form>

@@ -7,8 +7,6 @@ import (
 	"github.com/ishanshre/GoRestApiExample/internals/models"
 )
 
-type Authors map[string][]models.Author
-
 func (h *handler) HomeHandlerHtmx(c *gin.Context) {
 	authors, err := h.repo.GetAllAuthors()
 	if err != nil {
@@ -17,8 +15,10 @@ func (h *handler) HomeHandlerHtmx(c *gin.Context) {
 		})
 		return
 	}
-	c.HTML(http.StatusOK, "index.tmpl", gin.H{
-		"authors": authors,
+	data := make(map[string]interface{})
+	data["authors"] = authors
+	c.HTML(http.StatusOK, "index.tmpl", &models.TemplateData{
+		Data: data,
 	})
 }
 
@@ -37,14 +37,17 @@ func (h *handler) AddAuthorHandlerHtmx(c *gin.Context) {
 		LastName:  last_name,
 		Email:     email,
 	}
-	data, err := h.repo.CreateAuthor(author)
+	author_data, err := h.repo.CreateAuthor(author)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "index.tmpl", gin.H{
 			"error": "error in creating author",
 		})
 		return
 	}
-	c.HTML(http.StatusOK, "index.tmpl", gin.H{
-		"authors": data,
+	data := make(map[string]interface{})
+	data["authors"] = author_data
+
+	c.HTML(http.StatusOK, "index.tmpl", &models.TemplateData{
+		Data: data,
 	})
 }

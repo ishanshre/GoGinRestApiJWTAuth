@@ -42,9 +42,9 @@ func (s *postgresDBRepo) GetAllAuthors() ([]*models.Author, error) {
 	if err != nil {
 		return nil, err
 	}
-	var authors []*models.Author
+	authors := []*models.Author{}
 	for rows.Next() {
-		var a *models.Author
+		a := &models.Author{}
 		if err := rows.Scan(
 			&a.ID,
 			&a.FirstName,

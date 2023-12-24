@@ -19,6 +19,7 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/", handler.HomeHandlerHtmx)
+	r.POST("/add-author", handler.AddAuthorHandlerHtmx)
 
 	// In gin most specific router must be above
 	r.DELETE("/videos/detail/:id/delete", handler.DeleteVideoByID)
