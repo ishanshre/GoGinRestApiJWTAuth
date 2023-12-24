@@ -45,9 +45,7 @@ func (h *handler) AddAuthorHandlerHtmx(c *gin.Context) {
 		return
 	}
 	data := make(map[string]interface{})
-	data["authors"] = author_data
+	data["author"] = author_data
 
-	c.HTML(http.StatusOK, "index.tmpl", &models.TemplateData{
-		Data: data,
-	})
+	c.HTML(http.StatusOK, "author", author_data)
 }

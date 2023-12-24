@@ -69,14 +69,16 @@
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody id="authors-list">
               {{range $authors }}
+              {{block "author" .}}
                 <tr>
                   <td>{{.ID}}</td>
                   <td>{{.FirstName}} {{ .LastName }}</td>
                   <td>{{.Email}}</td>
                 </tr>
-                {{end}}
+              {{end}}
+              {{end}}
               </tbody>
             </table>
           </div>
@@ -88,19 +90,19 @@
         <div class="card">
           <div class="card-body">
             <h3 class="card-title">Create Author</h3>
-            <form action="/add-author" method="post">
+            <form hx-post="/add-author" hx-target="#authors-list" hx-swap="beforeend">
               <div class="mb-3">
                 <label for="first_name" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="first_name" placeholder="John" name="first_name">
+                <input type="text" class="form-control" id="first_name" placeholder="John" name="first_name" required>
               </div>
               <div class="mb-3">
                 <label for="last_name" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="last_name" placeholder="Bob" name="last_name">
+                <input type="text" class="form-control" id="last_name" placeholder="Bob" name="last_name" required>
               </div>
               <div class="mb-3">
                 <label for="email_address" class="form-label">Email address</label>
                 <input type="email" class="form-control" id="email_address" placeholder="name@example.com"
-                  name="email_address">
+                  name="email_address" required>
               </div>
               <button type="submit" class="btn btn-outline-primary">Submit</button>
             </form>
