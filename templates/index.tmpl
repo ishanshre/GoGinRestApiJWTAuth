@@ -58,7 +58,7 @@
       <div class="col-8">
         <div class="card">
           <div class="card-body">
-            <h3 class="card-title">Authors List</h3>
+            <h3 class="card-title" id="authors-list">Authors List</h3>
             {{ $authors := index .Data "authors" }}
             <table class="table">
               <thead>
@@ -66,16 +66,22 @@
                   <th>ID</th>
                   <th>Name</th>
                   <th>Email Address</th>
+                  <th>Action</th>
                 </tr>
               </thead>
 
-              <tbody id="authors-list">
+              <tbody id="author">
               {{range $authors }}
               {{block "author" .}}
                 <tr>
                   <td>{{.ID}}</td>
                   <td>{{.FirstName}} {{ .LastName }}</td>
                   <td>{{.Email}}</td>
+                  <td>
+                    <span class="badge rounded-pill text-bg-danger" style="cursor: pointer;"
+                    hx-delete="/delete-author/{{.ID}}" hx-target="#authors-list">X
+                    </span>
+                  </td>
                 </tr>
               {{end}}
               {{end}}
@@ -90,7 +96,7 @@
         <div class="card">
           <div class="card-body">
             <h3 class="card-title">Create Author</h3>
-            <form hx-post="/add-author" hx-target="#authors-list" hx-swap="beforeend">
+            <form hx-post="/add-author" hx-target="#author" hx-swap="beforeend" hx-indicator="#spinner">
               <div class="mb-3">
                 <label for="first_name" class="form-label">First Name</label>
                 <input type="text" class="form-control" id="first_name" placeholder="John" name="first_name" required>
@@ -104,7 +110,10 @@
                 <input type="email" class="form-control" id="email_address" placeholder="name@example.com"
                   name="email_address" required>
               </div>
-              <button type="submit" class="btn btn-outline-primary">Submit</button>
+              <button type="submit" class="btn btn-outline-primary">
+                <span class="spinner-border spinner-border-sm htmx-indicator" id="spinner" role="status" aria-hidden="true"></span>
+                Submit
+              </button>
             </form>
           </div>
 

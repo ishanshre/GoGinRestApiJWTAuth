@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ishanshre/GoRestApiExample/internals/models"
@@ -48,4 +50,23 @@ func (h *handler) AddAuthorHandlerHtmx(c *gin.Context) {
 	data["author"] = author_data
 
 	c.HTML(http.StatusOK, "author", author_data)
+}
+
+func (h *handler) DeleteAuthorHandlerHtmx(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "index.html", nil)
+		return
+	}
+	if err := h.repo.DeleteAuthorByID(id); err != nil {
+		c.HTML(http.StatusBadRequest, "index.html", nil)
+		log.Println(err.Error())
+		return
+	}
+	authors, _ := h.repo.GetAllAuthors()
+	data := make(map[string]interface{})
+	data["authors"] = authors
+	c.HTML(http.StatusNoContent, "index.tmpl", &models.TemplateData{
+		Data: data,
+	})
 }

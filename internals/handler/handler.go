@@ -30,6 +30,7 @@ type VideoHandler interface {
 
 	AddAuthorHandlerHtmx(c *gin.Context)
 	HomeHandlerHtmx(c *gin.Context)
+	DeleteAuthorHandlerHtmx(c *gin.Context)
 }
 
 type handler struct {

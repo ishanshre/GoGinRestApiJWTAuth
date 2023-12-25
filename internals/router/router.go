@@ -20,6 +20,7 @@ func SetupRouter(handler handler.VideoHandler) *gin.Engine {
 
 	r.GET("/", handler.HomeHandlerHtmx)
 	r.POST("/add-author", handler.AddAuthorHandlerHtmx)
+	r.DELETE("/delete-author/:id", handler.DeleteAuthorHandlerHtmx)
 
 	// In gin most specific router must be above
 	r.DELETE("/videos/detail/:id/delete", handler.DeleteVideoByID)

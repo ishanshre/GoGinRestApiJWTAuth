@@ -37,7 +37,7 @@ func (s *postgresDBRepo) GetAllAuthors() ([]*models.Author, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	query := `SELECT * FROM authors`
+	query := `SELECT * FROM authors ORDER BY first_name`
 	rows, err := s.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
